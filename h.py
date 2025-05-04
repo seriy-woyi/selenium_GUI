@@ -2,10 +2,10 @@ import time
 import xml.etree.ElementTree as ET
 from tkinter import *
 from tkinter import ttk
-from tkinter.messagebox import showinfo
-
+from tkinter.messagebox import showinfo, showerror
 from selenium.webdriver.common.by import By
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from core import Type, Click
 
 
@@ -15,28 +15,34 @@ def get_step_text(step):
 
 class MainWindow:
     def __init__(self, master):
-        # 修改背景图片
-        # 导入图片并设置为背景
         master.title("Serial's自动化测试")
-        image_file = "Macbook (1).png"
-        bg_image = PhotoImage(file=image_file)
-        bg_label = Label(master, image=bg_image)
-        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        try:
+            image_file = "Macbook (1).png"
+            bg_image = PhotoImage(file=image_file)
+            bg_label = Label(master, image=bg_image)
+            bg_label.image = bg_image
+            bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        except TclError:
+            print("图片加载失败，请检查图片路径。")
 
         # 解析 language.xml 文件
         tree = ET.parse("language.xml")
         root = tree.getroot()
         # 获取中文翻译
-        self.zh_title_texts = [text_elem.text for text_elem in root.findall(".//lang[@name='日本語']/title/*")]
-        self.zh_btn_texts = [text_elem.text for text_elem in root.findall(".//lang[@name='日本語']/button/*")]
+        self.zh_title_texts = [text_elem.text for text_elem in root.findall(".//lang[@name='中文']/title/*")]
+        self.zh_btn_texts = [text_elem.text for text_elem in root.findall(".//lang[@name='中文']/button/*")]
+        self.language = 'zh'
         self.language_combobox = ttk.Combobox(values=['中文', 'English', '日本語'])
         self.language_combobox.current(0)
         self.language_combobox.grid(row=0, column=1, padx=10, pady=10)
+        self.language_combobox.bind("<<ComboboxSelected>>", self.change_language)
+
         # 定义主框架
         self.frame_main = ttk.Frame(master, padding=20)
         self.frame_main.grid(column=0, row=0, sticky=(N, W, E, S))
         self.frame_main.columnconfigure(0, weight=1)
         master.geometry("550x400")
+
         # 定义URL输入框
         self.label_url = ttk.Label(self.frame_main, text=self.zh_title_texts[0])
         self.label_url.grid(column=0, row=0, sticky=(W, E))
@@ -71,9 +77,9 @@ class MainWindow:
         ])
         self.operation_type_combobox.current(0)
         self.operation_type_combobox.grid(column=1, row=3, sticky=(W, E))
+        self.operation_type_combobox.bind("<<ComboboxSelected>>", self.on_operation_type_changed)
 
         # 定义输入文本输入框（初始状态为隐藏）
-
         self.operation_type_button = ttk.Label(self.frame_main, text=self.zh_title_texts[4])
         self.operation_type_button.grid(column=0, row=4, sticky=(W, E))
         self.operation_type_button.grid_remove()
@@ -95,16 +101,15 @@ class MainWindow:
         self.execute_button = ttk.Button(self.frame_main, text=self.zh_btn_texts[1], command=self.execute)
         self.execute_button.grid(column=0, row=7, columnspan=2)
 
-        # 监听操作类型下拉框的文本变化
-        self.operation_type_combobox.bind("<<ComboboxSelected>>", self.on_operation_type_changed)
-
         # 定义步骤列表
         self.steps_list_box = Listbox(self.frame_main, width=60)
         self.steps_list_box.grid(column=0, row=8, columnspan=2)
         self.steps_list_box.bind("<<ListboxSelect>>", self.on_step_selected)
+
         # 定义删除步骤按钮
         self.delete_step_button = ttk.Button(self.frame_main, text=self.zh_btn_texts[3], command=self.delete_step)
         self.delete_step_button.grid(column=2, row=9)
+
         self.frame_main.place(relx=0.5, rely=0.5, anchor=CENTER)
 
     def change_language(self, event):
@@ -123,16 +128,26 @@ class MainWindow:
         tree = ET.parse("language.xml")
         root = tree.getroot()
 
-        if self.language == 'zh':
-            texts = ...  # 中文文本
-        elif self.language == 'en':
-            texts = ...  # 英文文本
-        else:
-            texts = ...  # 日文文本
+        lang = '中文' if self.language == 'zh' else 'English' if self.language == 'en' else '日本語'
+        title_texts = [text_elem.text for text_elem in root.findall(f".//lang[@name='{lang}']/title/*")]
+        button_texts = [text_elem.text for text_elem in root.findall(f".//lang[@name='{lang}']/button/*")]
 
-        # 保存文本到属性
-        self.title_texts = texts[0]
-        self.button_texts = texts[1]
+        # 更新标签文本
+        self.label_url.config(text=title_texts[0])
+        self.label_location_type.config(text=title_texts[1])
+        self.label_value.config(text=title_texts[2])
+        self.label_operation_type.config(text=title_texts[3])
+        self.operation_type_button.config(text=title_texts[4])
+        self.add_step_button.config(text=button_texts[0])
+        self.execute_button.config(text=button_texts[1])
+        self.delete_step_button.config(text=button_texts[3])
+
+        self.zh_title_texts = title_texts
+        self.zh_btn_texts = button_texts
+
+        # 更新操作类型下拉框的值
+        self.operation_type_combobox['values'] = [title_texts[5], title_texts[6]]
+
     def delete_step(self):
         # 获取选中项的索引
         index = self.steps_list_box.curselection()
@@ -157,7 +172,7 @@ class MainWindow:
         self.value_input.delete(0, END)
         self.value_input.insert(0, step["value"])
         self.operation_type_combobox.set(step["operation_type"])
-        if step["operation_type"] == self.zh_title_texts[5]:
+        if step["operation_type"] == self.zh_title_texts[6]:
             self.keys_input.delete(0, END)
             self.keys_input.insert(0, step["keys"])
             self.keys_input.grid()
@@ -256,69 +271,45 @@ class MainWindow:
     def execute(self):
         url = self.url_input.get()
 
-        # 打开浏览器
-        driver = webdriver.Edge()
-        driver.get(url)
-        # 实例化操作类
-        type_obj = Type(driver)
-        click_obj = Click(driver)
+        try:
+            # 打开浏览器
+            driver = webdriver.Edge()
+            driver.get(url)
+            # 实例化操作类
+            type_obj = Type(driver)
+            click_obj = Click(driver)
 
-        for step in self.steps:
-            location_type = step["location_type"]
-            value = step["value"]
-            operation_type = step["operation_type"]
-            keys = step["keys"]
-            wait_time = step["wait_time"]
+            for step in self.steps:
+                location_type = step["location_type"]
+                value = step["value"]
+                operation_type = step["operation_type"]
+                keys = step["keys"]
+                wait_time = step["wait_time"]
 
-            # 根据定位方式获取元素并执行相应操作
-            if operation_type == self.zh_title_texts[6]:
-                if location_type == "LINK_TEXT":
-                    click_obj.click(By.LINK_TEXT, value)
-                elif location_type == "CLASS_NAME":
-                    click_obj.click(By.CLASS_NAME, value)
-                elif location_type == "NAME":
-                    click_obj.click(By.NAME, value)
-                elif location_type == "ID":
-                    click_obj.click(By.ID, value)
-                elif location_type == "TAG_NAME":
-                    click_obj.click(By.TAG_NAME, value)
-                elif location_type == "PARTIAL_LINK_TEXT":
-                    click_obj.click(By.PARTIAL_LINK_TEXT, value)
-                elif location_type == "CSS_SELECTOR":
-                    click_obj.click(By.CSS_SELECTOR, value)
-                elif location_type == "XPATH":
-                    click_obj.click(By.XPATH, value)
+                try:
+                    by = getattr(By, location_type)
+                    if operation_type == self.zh_title_texts[6]:
+                        click_obj.click(by, value)
+                    elif operation_type == self.zh_title_texts[5]:
+                        type_obj.send_keys(by, value, keys)
 
-            elif operation_type == self.zh_title_texts[5]:
-                if location_type == "LINK_TEXT":
-                    type_obj.send_keys(By.LINK_TEXT, value, keys)
-                elif location_type == "CLASS_NAME":
-                    type_obj.send_keys(By.CLASS_NAME, value, keys)
-                elif location_type == "NAME":
-                    type_obj.send_keys(By.NAME, value, keys)
-                elif location_type == "ID":
-                    type_obj.send_keys(By.ID, value, keys)
-                elif location_type == "TAG_NAME":
-                    type_obj.send_keys(By.TAG_NAME, value, keys)
-                elif location_type == "PARTIAL_LINK_TEXT":
-                    type_obj.send_keys(By.PARTIAL_LINK_TEXT, value, keys)
-                elif location_type == "CSS_SELECTOR":
-                    type_obj.send_keys(By.CSS_SELECTOR, value, keys)
-                elif location_type == "XPATH":
-                    type_obj.send_keys(By.XPATH, value, keys)
+                    # 执行等待操作
+                    try:
+                        wait_time = float(wait_time)
+                        time.sleep(wait_time)
+                    except ValueError:
+                        pass  # 如果转换失败，则无需执行时间等待操作。
+                except NoSuchElementException:
+                    showerror("错误", f"未找到元素：{location_type}={value}")
+                    break
 
-            # 执行等待操作
-            try:
-                wait_time = float(wait_time)
-                time.sleep(wait_time)
-            except ValueError:
-                pass  # 如果转换失败，则无需执行时间等待操作。
+            # 关闭浏览器
+            driver.quit()
 
-        # 关闭浏览器
-        driver.quit()
-
-        # 任务执行完成后弹出提示框
-        showinfo("提示", "操作已完成！")
+            # 任务执行完成后弹出提示框
+            showinfo("提示", "操作已完成！")
+        except Exception as e:
+            showerror("错误", f"执行过程中出现错误：{str(e)}")
 
 
 if __name__ == '__main__':
