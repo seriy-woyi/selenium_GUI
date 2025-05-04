@@ -1,0 +1,61 @@
+<languages>
+    <lang name="中文">
+        <title>
+            <text_0>url：</text_0>
+            <text_1>定位方式：</text_1>
+            <text_2>元素值：</text_2>
+            <text_3>操作类型：</text_3>
+            <text_4>请输入文本：</text_4>
+            <text_5>点击元素</text_5>
+        <text_6>输入文本</text_6>
+            <text_7>等待时间，单位秒：</text_7>
+        </title>
+        <button>
+        <button_1>添加步骤</button_1>
+        <button_2>执行</button_2>
+        <button_3>修改步骤</button_3>
+        <button_4>删除步骤</button_4>
+        <button_5>导入</button_5>
+        <button_6>导出</button_6>
+        </button>
+    </lang>
+    <lang name="English">
+        <title>
+            <text_0>url：</text_0>
+            <text_1>Targeting method：</text_1>
+            <text_2>element value：</text_2>
+            <text_3>The type of operation：</text_3>
+            <text_4>Please enter text：</text_4>
+            <text_5>Click Element</text_5>
+        <text_6>Send_keys</text_6>
+            <text_7>Wait time,Second:</text_7></title>
+        <button>
+        <button_1>Add a step</button_1>
+        <button_2>execute</button_2>
+        <button_3>Modify the steps</button_3>
+        <button_4>Delete the step</button_4>
+        <button_5>Import</button_5>
+        <button_6>Export</button_6>
+        </button>
+    </lang>
+    <lang name="日本語">
+        <title>
+            <text_0>url：</text_0>
+            <text_1>ターゲティング方法：</text_1>
+            <text_2>要素値：</text_2>
+            <text_3>操作の種類：</text_3>
+            <text_4>テキストを入力してる：</text_4>
+            <text_5>クリック要素</text_5>
+        <text_6>テキストを入力</text_6>
+            <text_7>待機時間 (秒)：</text_7>
+        </title>
+        <button>
+        <button_1>ステップを追加する</button_1>
+        <button_2>実行する</button_2>
+        <button_3>手順を変更する</button_3>
+        <button_4>ステップを削除する</button_4>
+        <button_5>輸入</button_5>
+        <button_6>輸出</button_6>
+        </button>
+    </lang>
+</languages>
